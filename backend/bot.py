@@ -262,32 +262,63 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def show_products_in_category(query, category_id: str, category_name: str):
-    """Show products in a category"""
+    """Show all products in a category on one page"""
     products = await db.get_products_by_category(category_id)
     
+    category = await db.get_category_by_id(category_id)
+    parent_id = category.get("parent_id") if category else None
+    back_data = f"back_to_cat_{parent_id}" if parent_id else "back_to_menu"
+    
     if not products:
-        category = await db.get_category_by_id(category_id)
-        parent_id = category.get("parent_id") if category else None
-        back_data = f"back_to_cat_{parent_id}" if parent_id else "back_to_menu"
-        
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=back_data)]]
-        await query.message.edit_text(
-            f"*{category_name}*\n\n😔 В этой категории пока нет товаров",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        try:
+            await query.message.edit_text(
+                f"*{category_name}*\n\n😔 В этой категории пока нет товаров",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except:
+            try:
+                await query.message.delete()
+            except:
+                pass
+            await query.message.chat.send_message(
+                f"*{category_name}*\n\n😔 В этой категории пока нет товаров",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
         return
     
-    # Store category for back navigation
-    context_data = {
-        "current_category": category_id,
-        "category_name": category_name,
-        "products": products,
-        "product_index": 0
-    }
+    # Build product list text
+    text = f"*{category_name}*\n\n"
     
-    # Send first product
-    await send_product_card(query, products[0], category_id, 0, len(products))
+    keyboard = []
+    for i, product in enumerate(products):
+        text += f"*{i+1}. {product['name']}*\n"
+        text += f"📝 {product['description']}\n"
+        text += f"💰 *{product['price']:.2f} BYN*\n\n"
+        
+        # Add buttons for each product: quantity selector and add to cart
+        keyboard.append([
+            InlineKeyboardButton("➖", callback_data=f"qty_minus_{product['id']}_0"),
+            InlineKeyboardButton("1", callback_data=f"qty_show_{product['id']}"),
+            InlineKeyboardButton("➕", callback_data=f"qty_plus_{product['id']}_0"),
+            InlineKeyboardButton("🛒", callback_data=f"add_cart_{product['id']}_0")
+        ])
+    
+    keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data=back_data)])
+    
+    # Delete old message and send new (to handle photo messages)
+    try:
+        await query.message.delete()
+    except:
+        pass
+    
+    await query.message.chat.send_message(
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
 async def send_product_card(query, product: dict, category_id: str, index: int, total: int):
