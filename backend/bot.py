@@ -330,7 +330,7 @@ async def show_products_in_category(query, category_id: str, category_name: str)
     # Send back button at the end
     keyboard = [[InlineKeyboardButton("🔙 Назад в меню", callback_data=back_data)]]
     await query.message.chat.send_message(
-        "───────────────",
+        "⬇️ Выберите действие:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
