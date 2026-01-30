@@ -1473,8 +1473,8 @@ async def admin_add_product_image_handler(update: Update, context: ContextTypes.
 async def admin_add_product_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle product image input - photo file"""
     photo = update.message.photo[-1]  # Get largest photo
-    file = await photo.get_file()
-    image_url = file.file_path  # Telegram file URL
+    # Use file_id instead of file_path - file_id is permanent
+    image_url = photo.file_id
     await create_product_from_context(update, context, image_url)
     return ConversationHandler.END
 
