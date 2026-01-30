@@ -1257,10 +1257,31 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     
+    elif data.startswith("edit_prod_field_"):
+        field = data[16:]
+        context.user_data["edit_product_field"] = field
+        
+        field_names = {
+            "name": "название",
+            "description": "описание",
+            "price": "цену (только число)",
+            "image": "URL изображения"
+        }
+        
+        await query.message.edit_text(
+            f"✏️ Введите новое {field_names.get(field, field)}:",
+            parse_mode=ParseMode.MARKDOWN
+        )
+        return ADMIN_EDIT_PRODUCT_VALUE
+    
     elif data.startswith("edit_prod_"):
         prod_id = data[10:]
         context.user_data["edit_product_id"] = prod_id
         product = await db.get_product_by_id(prod_id)
+        
+        if not product:
+            await query.answer("❌ Товар не найден", show_alert=True)
+            return
         
         keyboard = [
             [InlineKeyboardButton("📝 Название", callback_data="edit_prod_field_name")],
@@ -1279,23 +1300,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-    
-    elif data.startswith("edit_prod_field_"):
-        field = data[16:]
-        context.user_data["edit_product_field"] = field
-        
-        field_names = {
-            "name": "название",
-            "description": "описание",
-            "price": "цену (только число)",
-            "image": "URL изображения"
-        }
-        
-        await query.message.edit_text(
-            f"✏️ Введите новое {field_names.get(field, field)}:",
-            parse_mode=ParseMode.MARKDOWN
-        )
-        return ADMIN_EDIT_PRODUCT_VALUE
     
     elif data == "admin_delete_product":
         products = await db.get_all_products()
