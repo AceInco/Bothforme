@@ -1588,7 +1588,15 @@ def main():
     admin_conv = ConversationHandler(
         entry_points=[
             CommandHandler("admin", admin_command),
-            CallbackQueryHandler(admin_callback, pattern="^admin_")
+            CallbackQueryHandler(admin_callback, pattern="^admin_"),
+            CallbackQueryHandler(admin_callback, pattern="^edit_prod_field_"),
+            CallbackQueryHandler(admin_callback, pattern="^edit_prod_"),
+            CallbackQueryHandler(admin_callback, pattern="^del_prod_"),
+            CallbackQueryHandler(admin_callback, pattern="^edit_cat_"),
+            CallbackQueryHandler(admin_callback, pattern="^del_cat_"),
+            CallbackQueryHandler(admin_callback, pattern="^remove_"),
+            CallbackQueryHandler(admin_callback, pattern="^subcat_parent_"),
+            CallbackQueryHandler(admin_callback, pattern="^add_prod_cat_"),
         ],
         states={
             ADMIN_ADD_ADMIN: [
