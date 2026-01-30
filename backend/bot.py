@@ -1648,7 +1648,6 @@ def main():
     application.add_handler(CallbackQueryHandler(category_callback, pattern="^(cat_|back_)"))
     application.add_handler(CallbackQueryHandler(product_callback, pattern="^(qty_|add_cart_|prod_|noop)"))
     application.add_handler(CallbackQueryHandler(cart_callback, pattern="^cart_"))
-    application.add_handler(CallbackQueryHandler(admin_callback, pattern="^(remove_|edit_|del_|subcat_)"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
     
     # Initialize test data on startup
