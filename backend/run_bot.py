@@ -16,15 +16,15 @@ load_dotenv(ROOT_DIR / '.env')
 
 import database as db
 
-async def init_and_run():
-    """Initialize database and run bot"""
-    # Initialize test data
+async def init_data():
+    """Initialize database"""
     await db.init_test_data()
     print("✅ Test data initialized")
-    
-    # Import and run bot
-    from bot import main
-    main()
 
 if __name__ == "__main__":
-    asyncio.run(init_and_run())
+    # Initialize test data first
+    asyncio.run(init_data())
+    
+    # Now import and run bot (it has its own event loop)
+    from bot import main
+    main()
