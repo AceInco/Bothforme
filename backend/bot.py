@@ -385,47 +385,22 @@ async def product_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def update_quantity_button(query, product_id: str, quantity: int, context):
-    """Update quantity button in product list"""
+    """Update quantity button in product message"""
     product = await db.get_product_by_id(product_id)
     if not product:
         return
     
-    category_id = product["category_id"]
-    category = await db.get_category_by_id(category_id)
-    category_name = category.get("name", "") if category else ""
-    parent_id = category.get("parent_id") if category else None
-    back_data = f"back_to_cat_{parent_id}" if parent_id else "back_to_menu"
-    
-    products = await db.get_products_by_category(category_id)
-    quantities = context.user_data.get("quantities", {})
-    
-    # Rebuild the entire keyboard with updated quantities
-    text = f"*{category_name}*\n\n"
-    keyboard = []
-    
-    for i, prod in enumerate(products):
-        text += f"*{i+1}. {prod['name']}*\n"
-        text += f"📝 {prod['description']}\n"
-        text += f"💰 *{prod['price']:.2f} BYN*\n\n"
-        
-        # Get quantity from context
-        qty_display = str(quantities.get(prod['id'], 1))
-        
-        keyboard.append([
-            InlineKeyboardButton("➖", callback_data=f"qty_minus_{prod['id']}_0"),
-            InlineKeyboardButton(qty_display, callback_data=f"qty_show_{prod['id']}"),
-            InlineKeyboardButton("➕", callback_data=f"qty_plus_{prod['id']}_0"),
-            InlineKeyboardButton("🛒", callback_data=f"add_cart_{prod['id']}_0")
-        ])
-    
-    keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data=back_data)])
+    keyboard = [
+        [
+            InlineKeyboardButton("➖", callback_data=f"qty_minus_{product['id']}_0"),
+            InlineKeyboardButton(str(quantity), callback_data=f"qty_show_{product['id']}"),
+            InlineKeyboardButton("➕", callback_data=f"qty_plus_{product['id']}_0"),
+            InlineKeyboardButton("🛒 В корзину", callback_data=f"add_cart_{product['id']}_0")
+        ]
+    ]
     
     try:
-        await query.message.edit_text(
-            text,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await query.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(keyboard))
     except:
         pass
 
