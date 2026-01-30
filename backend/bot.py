@@ -843,7 +843,7 @@ async def notify_new_order(bot, order: dict, customer_name: str, phone: str, add
 
 
 async def show_order_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show user's order history"""
+    """Show user's order history with repeat option"""
     user_id = update.effective_user.id
     orders = await db.get_user_orders(user_id)
     
@@ -856,6 +856,7 @@ async def show_order_history(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     text = "📋 *История заказов:*\n\n"
     
+    keyboard = []
     for order in orders[:10]:  # Last 10 orders
         total = order["total"] + order.get("delivery_cost", 0)
         status_emoji = {
@@ -868,7 +869,12 @@ async def show_order_history(update: Update, context: ContextTypes.DEFAULT_TYPE)
         }.get(order["status"], "❓")
         
         text += f"*Заказ #{order['order_number']}* {status_emoji}\n"
-        text += f"💰 {total:.2f} BYN\n"
+        
+        # Show items
+        for item in order.get("items", []):
+            text += f"  • {item['product_name']} x{item['quantity']}\n"
+        
+        text += f"💰 *{total:.2f} BYN*\n"
         
         # Parse date
         created_at = order.get("created_at", "")
@@ -876,8 +882,70 @@ async def show_order_history(update: Update, context: ContextTypes.DEFAULT_TYPE)
             text += f"📅 {created_at[:10]}\n"
         
         text += "\n"
+        
+        # Add repeat button for each order
+        keyboard.append([InlineKeyboardButton(
+            f"🔄 Повторить заказ #{order['order_number']}",
+            callback_data=f"repeat_order_{order['id']}"
+        )])
     
-    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(keyboard) if keyboard else None
+    )
+
+
+async def repeat_order_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle repeat order"""
+    query = update.callback_query
+    await query.answer()
+    
+    data = query.data
+    user_id = update.effective_user.id
+    
+    if data.startswith("repeat_order_"):
+        order_id = data[13:]
+        orders = await db.get_user_orders(user_id)
+        
+        # Find the order
+        order = None
+        for o in orders:
+            if o["id"] == order_id:
+                order = o
+                break
+        
+        if not order:
+            await query.answer("❌ Заказ не найден", show_alert=True)
+            return
+        
+        # Clear current cart and add items from order
+        await db.clear_cart(user_id)
+        
+        items_added = 0
+        for item in order.get("items", []):
+            # Check if product still exists
+            product = await db.get_product_by_id(item["product_id"])
+            if product:
+                await db.add_to_cart(
+                    user_id,
+                    item["product_id"],
+                    product["name"],
+                    item["quantity"],
+                    product["price"]  # Use current price
+                )
+                items_added += 1
+        
+        if items_added > 0:
+            await query.answer(f"✅ {items_added} товаров добавлено в корзину!", show_alert=True)
+            await query.message.reply_text(
+                f"🛒 *Товары из заказа #{order['order_number']} добавлены в корзину!*\n\n"
+                f"Перейдите в корзину для оформления заказа.",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=get_main_keyboard()
+            )
+        else:
+            await query.answer("❌ Товары из этого заказа больше недоступны", show_alert=True)
 
 
 async def show_about(update: Update, context: ContextTypes.DEFAULT_TYPE):
