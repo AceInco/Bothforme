@@ -321,63 +321,6 @@ async def show_products_in_category(query, category_id: str, category_name: str)
     )
 
 
-async def send_product_card(query, product: dict, category_id: str, index: int, total: int):
-    """Send product card with photo"""
-    category = await db.get_category_by_id(category_id)
-    parent_id = category.get("parent_id") if category else None
-    back_data = f"back_to_cat_{parent_id}" if parent_id else "back_to_menu"
-    
-    text = f"*{product['name']}*\n\n"
-    text += f"📝 {product['description']}\n\n"
-    text += f"💰 *{product['price']:.2f} BYN*"
-    
-    keyboard = [
-        [
-            InlineKeyboardButton("➖", callback_data=f"qty_minus_{product['id']}_{index}"),
-            InlineKeyboardButton("1", callback_data=f"qty_show_{product['id']}"),
-            InlineKeyboardButton("➕", callback_data=f"qty_plus_{product['id']}_{index}")
-        ],
-        [InlineKeyboardButton("🛒 В корзину", callback_data=f"add_cart_{product['id']}_{index}")],
-    ]
-    
-    # Navigation buttons
-    nav_buttons = []
-    if index > 0:
-        nav_buttons.append(InlineKeyboardButton("⬅️", callback_data=f"prod_prev_{category_id}_{index}"))
-    nav_buttons.append(InlineKeyboardButton(f"{index + 1}/{total}", callback_data="noop"))
-    if index < total - 1:
-        nav_buttons.append(InlineKeyboardButton("➡️", callback_data=f"prod_next_{category_id}_{index}"))
-    
-    keyboard.append(nav_buttons)
-    keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data=back_data)])
-    
-    try:
-        await query.message.delete()
-    except:
-        pass
-    
-    if product.get("image_url"):
-        try:
-            await query.message.chat.send_photo(
-                photo=product["image_url"],
-                caption=text,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        except:
-            await query.message.chat.send_message(
-                text=text,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-    else:
-        await query.message.chat.send_message(
-            text=text,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-
 async def product_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle product interactions"""
     query = update.callback_query
