@@ -15,16 +15,23 @@ from dotenv import load_dotenv
 load_dotenv(ROOT_DIR / '.env')
 
 import database as db
+from bot import main, Application, BOT_TOKEN, Update
+import logging
 
-async def init_data():
-    """Initialize database"""
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+async def post_init(application):
+    """Initialize test data after bot starts"""
     await db.init_test_data()
-    print("✅ Test data initialized")
+    logger.info("✅ Test data initialized")
 
 if __name__ == "__main__":
-    # Initialize test data first
-    asyncio.run(init_data())
+    # Create new event loop
+    asyncio.set_event_loop(asyncio.new_event_loop())
     
-    # Now import and run bot (it has its own event loop)
-    from bot import main
+    # Run bot
     main()
