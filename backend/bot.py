@@ -393,28 +393,25 @@ async def product_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("qty_minus_"):
         parts = data.split("_")
         product_id = parts[2]
-        index = int(parts[3])
         
         current_qty = context.user_data["quantities"].get(product_id, 1)
         if current_qty > 1:
             context.user_data["quantities"][product_id] = current_qty - 1
         
-        await update_quantity_button(query, product_id, context.user_data["quantities"].get(product_id, 1), index)
+        await update_quantity_button(query, product_id, context.user_data["quantities"].get(product_id, 1), context)
     
     elif data.startswith("qty_plus_"):
         parts = data.split("_")
         product_id = parts[2]
-        index = int(parts[3])
         
         current_qty = context.user_data["quantities"].get(product_id, 1)
         context.user_data["quantities"][product_id] = current_qty + 1
         
-        await update_quantity_button(query, product_id, context.user_data["quantities"][product_id], index)
+        await update_quantity_button(query, product_id, context.user_data["quantities"][product_id], context)
     
     elif data.startswith("add_cart_"):
         parts = data.split("_")
         product_id = parts[2]
-        index = int(parts[3])
         
         product = await db.get_product_by_id(product_id)
         if product:
@@ -423,20 +420,8 @@ async def product_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer(f"✅ {product['name']} x{qty} добавлено в корзину!", show_alert=True)
             # Reset quantity
             context.user_data["quantities"][product_id] = 1
-    
-    elif data.startswith("prod_prev_") or data.startswith("prod_next_"):
-        parts = data.split("_")
-        category_id = parts[2]
-        current_index = int(parts[3])
-        
-        if data.startswith("prod_prev_"):
-            new_index = current_index - 1
-        else:
-            new_index = current_index + 1
-        
-        products = await db.get_products_by_category(category_id)
-        if 0 <= new_index < len(products):
-            await send_product_card(query, products[new_index], category_id, new_index, len(products))
+            # Update display
+            await update_quantity_button(query, product_id, 1, context)
     
     elif data == "noop":
         pass
