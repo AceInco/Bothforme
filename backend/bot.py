@@ -1486,7 +1486,7 @@ async def create_product_from_context(update_or_query, context: ContextTypes.DEF
 
 
 async def admin_edit_product_value_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle product field edit"""
+    """Handle product field edit - text"""
     value = update.message.text
     prod_id = context.user_data.get("edit_product_id")
     field = context.user_data.get("edit_product_field")
@@ -1504,6 +1504,27 @@ async def admin_edit_product_value_handler(update: Update, context: ContextTypes
     await db.update_product(prod_id, **{field: value})
     await update.message.reply_text(
         f"✅ Товар обновлён!",
+        reply_markup=get_admin_keyboard()
+    )
+    return ConversationHandler.END
+
+
+async def admin_edit_product_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle product image edit - photo file"""
+    prod_id = context.user_data.get("edit_product_id")
+    field = context.user_data.get("edit_product_field")
+    
+    if field != "image":
+        await update.message.reply_text("❌ Ожидался текст, а не фото")
+        return ConversationHandler.END
+    
+    photo = update.message.photo[-1]  # Get largest photo
+    file = await photo.get_file()
+    image_url = file.file_path  # Telegram file URL
+    
+    await db.update_product(prod_id, image_url=image_url)
+    await update.message.reply_text(
+        f"✅ Изображение товара обновлено!",
         reply_markup=get_admin_keyboard()
     )
     return ConversationHandler.END
