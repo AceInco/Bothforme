@@ -1654,10 +1654,12 @@ def main():
                 MessageHandler(filters.TEXT & ~filters.COMMAND, admin_add_product_price_handler)
             ],
             ADMIN_ADD_PRODUCT_IMAGE: [
+                MessageHandler(filters.PHOTO, admin_add_product_photo_handler),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, admin_add_product_image_handler),
                 CallbackQueryHandler(skip_product_image_callback, pattern="^skip_product_image$")
             ],
             ADMIN_EDIT_PRODUCT_VALUE: [
+                MessageHandler(filters.PHOTO, admin_edit_product_photo_handler),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, admin_edit_product_value_handler)
             ],
             ADMIN_BROADCAST_MESSAGE: [
