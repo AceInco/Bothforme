@@ -427,7 +427,7 @@ async def product_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass
 
 
-async def update_quantity_button(query, product_id: str, quantity: int, index: int):
+async def update_quantity_button(query, product_id: str, quantity: int, context):
     """Update quantity button in product list"""
     product = await db.get_product_by_id(product_id)
     if not product:
@@ -440,26 +440,23 @@ async def update_quantity_button(query, product_id: str, quantity: int, index: i
     back_data = f"back_to_cat_{parent_id}" if parent_id else "back_to_menu"
     
     products = await db.get_products_by_category(category_id)
+    quantities = context.user_data.get("quantities", {})
     
-    # Rebuild the entire keyboard with updated quantity for this product
+    # Rebuild the entire keyboard with updated quantities
     text = f"*{category_name}*\n\n"
     keyboard = []
     
-    # Get all quantities from context (we need to preserve them)
     for i, prod in enumerate(products):
         text += f"*{i+1}. {prod['name']}*\n"
         text += f"📝 {prod['description']}\n"
         text += f"💰 *{prod['price']:.2f} BYN*\n\n"
         
-        # Use updated quantity for the changed product
-        if prod['id'] == product_id:
-            qty_display = str(quantity)
-        else:
-            qty_display = "1"  # Default, will be updated dynamically
+        # Get quantity from context
+        qty_display = str(quantities.get(prod['id'], 1))
         
         keyboard.append([
             InlineKeyboardButton("➖", callback_data=f"qty_minus_{prod['id']}_0"),
-            InlineKeyboardButton(qty_display if prod['id'] == product_id else "1", callback_data=f"qty_show_{prod['id']}"),
+            InlineKeyboardButton(qty_display, callback_data=f"qty_show_{prod['id']}"),
             InlineKeyboardButton("➕", callback_data=f"qty_plus_{prod['id']}_0"),
             InlineKeyboardButton("🛒", callback_data=f"add_cart_{prod['id']}_0")
         ])
