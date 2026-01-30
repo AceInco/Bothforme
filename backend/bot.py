@@ -1428,7 +1428,7 @@ async def admin_add_product_price_handler(update: Update, context: ContextTypes.
         
         keyboard = [[InlineKeyboardButton("⏭ Пропустить", callback_data="skip_product_image")]]
         await update.message.reply_text(
-            "🖼 Отправьте URL изображения или нажмите пропустить:",
+            "🖼 Отправьте фото товара или URL изображения (или нажмите пропустить):",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return ADMIN_ADD_PRODUCT_IMAGE
@@ -1438,8 +1438,17 @@ async def admin_add_product_price_handler(update: Update, context: ContextTypes.
 
 
 async def admin_add_product_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle product image input"""
+    """Handle product image input - text URL"""
     image_url = update.message.text
+    await create_product_from_context(update, context, image_url)
+    return ConversationHandler.END
+
+
+async def admin_add_product_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle product image input - photo file"""
+    photo = update.message.photo[-1]  # Get largest photo
+    file = await photo.get_file()
+    image_url = file.file_path  # Telegram file URL
     await create_product_from_context(update, context, image_url)
     return ConversationHandler.END
 
