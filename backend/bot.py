@@ -262,61 +262,75 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def show_products_in_category(query, category_id: str, category_name: str):
-    """Show all products in a category on one page"""
+    """Show all products in a category - each product as separate message with photo"""
     products = await db.get_products_by_category(category_id)
     
     category = await db.get_category_by_id(category_id)
     parent_id = category.get("parent_id") if category else None
     back_data = f"back_to_cat_{parent_id}" if parent_id else "back_to_menu"
     
-    if not products:
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=back_data)]]
-        try:
-            await query.message.edit_text(
-                f"*{category_name}*\n\n😔 В этой категории пока нет товаров",
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        except:
-            try:
-                await query.message.delete()
-            except:
-                pass
-            await query.message.chat.send_message(
-                f"*{category_name}*\n\n😔 В этой категории пока нет товаров",
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        return
-    
-    # Build product list text
-    text = f"*{category_name}*\n\n"
-    
-    keyboard = []
-    for i, product in enumerate(products):
-        text += f"*{i+1}. {product['name']}*\n"
-        text += f"📝 {product['description']}\n"
-        text += f"💰 *{product['price']:.2f} BYN*\n\n"
-        
-        # Add buttons for each product: quantity selector and add to cart
-        keyboard.append([
-            InlineKeyboardButton("➖", callback_data=f"qty_minus_{product['id']}_0"),
-            InlineKeyboardButton("1", callback_data=f"qty_show_{product['id']}"),
-            InlineKeyboardButton("➕", callback_data=f"qty_plus_{product['id']}_0"),
-            InlineKeyboardButton("🛒", callback_data=f"add_cart_{product['id']}_0")
-        ])
-    
-    keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data=back_data)])
-    
-    # Delete old message and send new (to handle photo messages)
+    # Delete previous message
     try:
         await query.message.delete()
     except:
         pass
     
+    if not products:
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=back_data)]]
+        await query.message.chat.send_message(
+            f"*{category_name}*\n\n😔 В этой категории пока нет товаров",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        return
+    
+    # Send category header
     await query.message.chat.send_message(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
+        f"📂 *{category_name}*\n\nТовары в категории:",
+        parse_mode=ParseMode.MARKDOWN
+    )
+    
+    # Send each product as separate message with photo
+    for i, product in enumerate(products):
+        text = f"*{product['name']}*\n\n"
+        text += f"📝 {product['description']}\n\n"
+        text += f"💰 *{product['price']:.2f} BYN*"
+        
+        keyboard = [
+            [
+                InlineKeyboardButton("➖", callback_data=f"qty_minus_{product['id']}_0"),
+                InlineKeyboardButton("1", callback_data=f"qty_show_{product['id']}"),
+                InlineKeyboardButton("➕", callback_data=f"qty_plus_{product['id']}_0"),
+                InlineKeyboardButton("🛒 В корзину", callback_data=f"add_cart_{product['id']}_0")
+            ]
+        ]
+        
+        if product.get("image_url"):
+            try:
+                await query.message.chat.send_photo(
+                    photo=product["image_url"],
+                    caption=text,
+                    parse_mode=ParseMode.MARKDOWN,
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except Exception as e:
+                # If photo fails, send as text
+                await query.message.chat.send_message(
+                    text=text,
+                    parse_mode=ParseMode.MARKDOWN,
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+        else:
+            await query.message.chat.send_message(
+                text=text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+    
+    # Send back button at the end
+    keyboard = [[InlineKeyboardButton("🔙 Назад в меню", callback_data=back_data)]]
+    await query.message.chat.send_message(
+        "───────────────",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
