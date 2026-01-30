@@ -1545,8 +1545,8 @@ async def admin_edit_product_photo_handler(update: Update, context: ContextTypes
         return ConversationHandler.END
     
     photo = update.message.photo[-1]  # Get largest photo
-    file = await photo.get_file()
-    image_url = file.file_path  # Telegram file URL
+    # Use file_id instead of file_path - file_id is permanent
+    image_url = photo.file_id
     
     await db.update_product(prod_id, image_url=image_url)
     await update.message.reply_text(
