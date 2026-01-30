@@ -1597,6 +1597,13 @@ def main():
     application.add_handler(CallbackQueryHandler(admin_callback, pattern="^(remove_|edit_|del_|subcat_)"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
     
+    # Initialize test data on startup
+    async def post_init(app):
+        await db.init_test_data()
+        logger.info("✅ Test data initialized")
+    
+    application.post_init = post_init
+    
     # Run the bot
     logger.info("Starting bot...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
