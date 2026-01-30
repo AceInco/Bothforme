@@ -159,7 +159,10 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
     
     if data == "back_main":
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except:
+            pass
         return
     
     if data.startswith("cat_"):
@@ -167,7 +170,10 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         category = await db.get_category_by_id(category_id)
         
         if not category:
-            await query.message.edit_text("❌ Категория не найдена")
+            try:
+                await query.message.edit_text("❌ Категория не найдена")
+            except:
+                await query.message.reply_text("❌ Категория не найдена")
             return
         
         # Check for subcategories
@@ -180,11 +186,23 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 keyboard.append([InlineKeyboardButton(subcat["name"], callback_data=f"cat_{subcat['id']}")])
             keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data="back_to_menu")])
             
-            await query.message.edit_text(
-                f"*{category['name']}*\n\nВыберите подкатегорию:",
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            try:
+                await query.message.edit_text(
+                    f"*{category['name']}*\n\nВыберите подкатегорию:",
+                    parse_mode=ParseMode.MARKDOWN,
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                # Message has photo, delete and send new
+                try:
+                    await query.message.delete()
+                except:
+                    pass
+                await query.message.chat.send_message(
+                    f"*{category['name']}*\n\nВыберите подкатегорию:",
+                    parse_mode=ParseMode.MARKDOWN,
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
         else:
             # Show products in category
             await show_products_in_category(query, category_id, category["name"])
@@ -196,11 +214,23 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard.append([InlineKeyboardButton(cat["name"], callback_data=f"cat_{cat['id']}")])
         keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data="back_main")])
         
-        await query.message.edit_text(
-            "🍣 *Выберите категорию:*",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        try:
+            await query.message.edit_text(
+                "🍣 *Выберите категорию:*",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except:
+            # Message has photo, delete and send new
+            try:
+                await query.message.delete()
+            except:
+                pass
+            await query.message.chat.send_message(
+                "🍣 *Выберите категорию:*",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
     
     elif data.startswith("back_to_cat_"):
         parent_id = data[12:]
@@ -212,11 +242,23 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard.append([InlineKeyboardButton(subcat["name"], callback_data=f"cat_{subcat['id']}")])
         keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data="back_to_menu")])
         
-        await query.message.edit_text(
-            f"*{category['name']}*\n\nВыберите подкатегорию:",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        try:
+            await query.message.edit_text(
+                f"*{category['name']}*\n\nВыберите подкатегорию:",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except:
+            # Message has photo, delete and send new
+            try:
+                await query.message.delete()
+            except:
+                pass
+            await query.message.chat.send_message(
+                f"*{category['name']}*\n\nВыберите подкатегорию:",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
 
 async def show_products_in_category(query, category_id: str, category_name: str):
