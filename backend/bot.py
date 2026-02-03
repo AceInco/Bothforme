@@ -65,7 +65,7 @@ ADMIN_ADD_SUBCATEGORY_PARENT = 25
 ADMIN_ADD_SUBCATEGORY_NAME = 26
 
 # Delivery cost
-DELIVERY_COST = 4.0
+DELIVERY_COST = 5.0
 PICKUP_ADDRESS = "Новый Свержень, Железнодорожная 12а"
 
 # Welcome message
@@ -310,7 +310,6 @@ async def show_products_in_category(query, category_id: str, category_name: str)
                 await query.message.chat.send_photo(
                     photo=product["image_url"],
                     caption=text,
-                    parse_mode=ParseMode.MARKDOWN,
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except Exception as e:
