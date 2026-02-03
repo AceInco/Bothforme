@@ -307,7 +307,7 @@ async def show_products_in_category(query, category_id: str, category_name: str)
         
         if product.get("image_url"):
             try:
-                await query.message.answer_photo(
+                await query.message.reply_photo(
                     photo=product["image_url"],
                     caption=text,
                     reply_markup=InlineKeyboardMarkup(keyboard)
