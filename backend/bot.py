@@ -307,13 +307,14 @@ async def show_products_in_category(query, category_id: str, category_name: str)
         
         if product.get("image_url"):
             try:
-                await query.message.chat.send_photo(
+                await query.message.answer_photo(
                     photo=product["image_url"],
                     caption=text,
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except Exception as e:
                 # If photo fails, send as text
+                print("PHOTO ERROR:", e)
                 await query.message.chat.send_message(
                     text=text,
                     parse_mode=ParseMode.MARKDOWN,
