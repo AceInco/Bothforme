@@ -1256,7 +1256,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "admin_list_products":
         products = await db.get_all_products()
         text = "📦 *Список товаров:*\n\n"
-        for prod in products[:20]:
+        for prod in products:
             status = "✅" if prod.get("is_active", True) else "❌"
             text += f"{status} {prod['name']} - {prod['price']:.2f} BYN\n"
         
