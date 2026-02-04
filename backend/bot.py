@@ -1270,7 +1270,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "admin_edit_product":
         products = await db.get_all_products()
         keyboard = []
-        for prod in products[:15]:
+        for prod in products:
             keyboard.append([InlineKeyboardButton(
                 f"✏️ {prod['name']}",
                 callback_data=f"edit_prod_{prod['id']}"
