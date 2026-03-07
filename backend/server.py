@@ -9,6 +9,13 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List
 import uuid
 from datetime import datetime, timezone
+import asyncio
+from bot import main as start_bot
+
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(start_bot())
 
 
 ROOT_DIR = Path(__file__).parent
