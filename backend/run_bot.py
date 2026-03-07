@@ -31,7 +31,5 @@ async def post_init(application):
 
 if __name__ == "__main__":
     # Create new event loop
-    asyncio.set_event_loop(asyncio.new_event_loop())
-    
     # Run bot
     main()
